@@ -1,6 +1,6 @@
 import { Currency, Pair } from '@uniswap/sdk'
-import React, { useState, useContext, useCallback } from 'react'
-import styled, { ThemeContext } from 'styled-components'
+import React, { useState, useCallback } from 'react'
+import styled from 'styled-components'
 import { darken } from 'polished'
 import { useCurrencyBalance } from '../../state/wallet/hooks'
 import CurrencySearchModal from '../SearchModal/CurrencySearchModal'
@@ -13,6 +13,7 @@ import { ReactComponent as DropDown } from '../../assets/images/dropdown.svg'
 
 import { useActiveWeb3React } from '../../hooks'
 import { useTranslation } from 'react-i18next'
+import useTheme from '../../hooks/useTheme'
 
 const InputRow = styled.div<{ selected: boolean }>`
   ${({ theme }) => theme.flexRowNoWrap}
@@ -129,6 +130,7 @@ interface CurrencyInputPanelProps {
   otherCurrency?: Currency | null
   id: string
   showCommonBases?: boolean
+  customBalanceText?: string
 }
 
 export default function CurrencyInputPanel({
@@ -145,14 +147,15 @@ export default function CurrencyInputPanel({
   hideInput = false,
   otherCurrency,
   id,
-  showCommonBases
+  showCommonBases,
+  customBalanceText
 }: CurrencyInputPanelProps) {
   const { t } = useTranslation()
 
   const [modalOpen, setModalOpen] = useState(false)
   const { account } = useActiveWeb3React()
   const selectedCurrencyBalance = useCurrencyBalance(account ?? undefined, currency ?? undefined)
-  const theme = useContext(ThemeContext)
+  const theme = useTheme()
 
   const handleDismissSearch = useCallback(() => {
     setModalOpen(false)
@@ -176,7 +179,7 @@ export default function CurrencyInputPanel({
                   style={{ display: 'inline', cursor: 'pointer' }}
                 >
                   {!hideBalance && !!currency && selectedCurrencyBalance
-                    ? 'Balance: ' + selectedCurrencyBalance?.toSignificant(6)
+                    ? (customBalanceText ?? 'Balance: ') + selectedCurrencyBalance?.toSignificant(6)
                     : ' -'}
                 </TYPE.body>
               )}

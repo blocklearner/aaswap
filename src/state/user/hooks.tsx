@@ -1,5 +1,6 @@
 import { ChainId, Pair, Token } from '@uniswap/sdk'
 import flatMap from 'lodash.flatmap'
+import ReactGA from 'react-ga'
 import { useCallback, useMemo } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { BASES_TO_TRACK_LIQUIDITY_FOR, PINNED_PAIRS } from '../../constants'
@@ -16,7 +17,9 @@ import {
   updateUserDarkMode,
   updateUserDeadline,
   updateUserExpertMode,
-  updateUserSlippageTolerance
+  updateUserSlippageTolerance,
+  toggleURLWarning,
+  updateUserSingleHopOnly
 } from './actions'
 
 function serializeToken(token: Token): SerializedToken {
@@ -80,6 +83,27 @@ export function useExpertModeManager(): [boolean, () => void] {
   return [expertMode, toggleSetExpertMode]
 }
 
+export function useUserSingleHopOnly(): [boolean, (newSingleHopOnly: boolean) => void] {
+  const dispatch = useDispatch<AppDispatch>()
+
+  const singleHopOnly = useSelector<AppState, AppState['user']['userSingleHopOnly']>(
+    state => state.user.userSingleHopOnly
+  )
+
+  const setSingleHopOnly = useCallback(
+    (newSingleHopOnly: boolean) => {
+      ReactGA.event({
+        category: 'Routing',
+        action: newSingleHopOnly ? 'enable single hop' : 'disable single hop'
+      })
+      dispatch(updateUserSingleHopOnly({ userSingleHopOnly: newSingleHopOnly }))
+    },
+    [dispatch]
+  )
+
+  return [singleHopOnly, setSingleHopOnly]
+}
+
 export function useUserSlippageTolerance(): [number, (slippage: number) => void] {
   const dispatch = useDispatch<AppDispatch>()
   const userSlippageTolerance = useSelector<AppState, AppState['user']['userSlippageTolerance']>(state => {
@@ -96,7 +120,7 @@ export function useUserSlippageTolerance(): [number, (slippage: number) => void]
   return [userSlippageTolerance, setUserSlippageTolerance]
 }
 
-export function useUserDeadline(): [number, (slippage: number) => void] {
+export function useUserTransactionTTL(): [number, (slippage: number) => void] {
   const dispatch = useDispatch<AppDispatch>()
   const userDeadline = useSelector<AppState, AppState['user']['userDeadline']>(state => {
     return state.user.userDeadline
@@ -158,6 +182,15 @@ export function usePairAdder(): (pair: Pair) => void {
     },
     [dispatch]
   )
+}
+
+export function useURLWarningVisible(): boolean {
+  return useSelector((state: AppState) => state.user.URLWarningVisible)
+}
+
+export function useURLWarningToggle(): () => void {
+  const dispatch = useDispatch()
+  return useCallback(() => dispatch(toggleURLWarning()), [dispatch])
 }
 
 /**
